@@ -1,0 +1,25 @@
+name: Flutter_Web_Deploy
+on:
+  push:
+    branches: 
+      - master
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  flutter_build_web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+      - uses: subosito/flutter-action@v1
+        with:
+          channel: 'stable'
+      - run: flutter pub get
+      - run: flutter build web
+      - name: ssh key generate
+        run: echo "$SSH_PRIVATE_KEY" > key && chmod 600 key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: rsync deploy
+        run: rsync -avuzr -e "ssh -i key -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -p 10022" --delete build/web/ xs974685@162.43.117.102:/home/xs974685//sora-tokyo-dateplan.com/public_html/mapapp_web/
